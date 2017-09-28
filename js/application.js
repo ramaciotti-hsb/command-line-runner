@@ -12,7 +12,6 @@ document.addEventListener("DOMContentLoaded", () => {
     ReactDOM.render(<Container />, document.getElementById('container-outer'))
 })
 
-
 document.addEventListener('dragleave', function (event) {
   event.preventDefault();
   return false;
