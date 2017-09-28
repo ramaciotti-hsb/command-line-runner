@@ -1,0 +1,31 @@
+@mixin backgroundHover($backgroundColor, $percentage:5%) {
+    background: $backgroundColor;
+
+    &:hover {
+        background: darken($backgroundColor, $percentage);
+    }
+}
+
+@mixin backgroundClick($backgroundColor, $percentage:10%) {
+    background: $backgroundColor;
+
+    &:active {
+        background: darken($backgroundColor, $percentage);
+    }
+}
+
+@mixin foregroundHover($foregroundColor, $percentage:5%) {
+    color: $foregroundColor;
+
+    &:hover {
+        color: darken($foregroundColor, $percentage);
+    }
+}
+
+@mixin foregroundClick($foregroundColor, $percentage:10%) {
+    color: $foregroundColor;
+
+    &:active {
+        color: darken($foregroundColor, $percentage);
+    }
+}

@@ -1,0 +1,184 @@
+@import 'mixins';
+
+body, html, div {
+    display: flex;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    font-family: 'Open Sans';
+    height: 100%;
+    width: 100%;
+
+    body {
+        flex-grow: 1;
+        align-items: stretch;
+        
+        .container-outer {
+            flex-grow: 1;
+            align-items: stretch;
+
+            .container {
+                flex-grow: 1;
+                flex-direction: column;
+
+                & > .header {
+                    padding: 0 20px;
+                    border-bottom: 1px solid #eee;
+                }
+
+                .container-inner {
+                    flex-grow: 1;
+
+                    .sidebar {
+                        flex-basis: 40%;
+                        flex-direction: column;
+                        align-items: stretch;
+                        border-right: 1px solid #eee;
+
+                        .sidebar-item {
+                            align-items: center;
+                            border-bottom: 1px solid #eee;
+                            padding: 10px 0;
+                            cursor: pointer;
+                            @include backgroundHover(#fff);
+                            @include backgroundClick(#fff);
+
+                            &.selected {
+                                @include backgroundHover(#fafafa);
+                                @include backgroundClick(#fafafa);    
+                                border-right: 5px solid #69D2E7;
+                            }
+
+                            & > .number {
+                                font-size: 24px;
+                                font-weight: 200;
+                                padding: 0 15px;
+                                color: #ccc;
+                            }
+
+                            & > .body {
+                                font-size: 12px;
+                                flex-grow: 1;
+                                flex-direction: column;
+
+                                & > .title {
+                                    font-size: 14px;
+                                    margin-bottom: 5px;
+                                    font-weight: 600;
+                                    color: #666;
+                                }
+                            }
+                        } // .sidebar-item
+                    } // .sidebar
+
+                    .panel {
+                        flex-basis: 60%;
+                        flex-direction: column;
+
+                        & > .header {
+                            padding: 15px;
+                            font-size: 20px;
+                            font-weight: 200;
+                        }
+
+                        .panel-inner {
+                            flex-grow: 1;
+                            flex-direction: column;
+
+                            .title {
+                                font-size: 14px;
+                                font-weight: 600;
+                                color: #888;
+                                margin-bottom: 10px;
+                            }
+
+                            .body {
+                                font-size: 14px;
+                                font-weight: 400;
+                                color: #333;
+                            }
+
+                            .working-directory, .command-string, .command-parameters {
+                                padding: 0 15px;
+                                margin-bottom: 15px;
+                                flex-direction: column;
+                            }
+
+                            .command-string-inner {
+                                flex-shrink: 1;
+                                padding: 15px;
+                                background: #ccc;
+                                font-family: 'Inconsolata' monospace;
+                                font-size: 14px;
+                                border-radius: 5px;
+                            }
+
+                            .command-parameters {
+
+                                .parameter {
+                                    font-size: 14px;
+                                    align-items: center;
+                                    margin-bottom: 10px;
+
+                                    .parameter-name {
+                                        margin-right: 15px;
+                                        width: 100px;
+                                    }
+
+                                    .parameter-input {
+                                        padding: 5px 8px;
+                                        font: 200 14px 'Open Sans';
+                                        flex-grow: 1;
+                                    }
+                                }
+                            }
+
+                            .command-actions {
+                                margin-left: 15px;
+
+                                .run {
+                                    align-items: center;
+                                    padding: 8px 12px;
+                                    background: #ccc;
+                                    font-weight: 600;
+                                    color: #fff;
+                                    cursor: pointer;
+                                    @include backgroundHover(#69D2E7);
+                                    @include backgroundClick(#69D2E7);
+
+                                    span {
+                                        margin-right: 5px;
+                                        font-size: 20px;
+                                    }
+                                }
+                            }
+
+                            .command-output {
+                                flex-grow: 1;
+                                padding: 15px;
+                                background: #eee;
+                                font-family: 'Inconsolata' monospace;
+                                font-size: 14px;
+                                margin-top: 15px;
+
+                                &:empty {
+                                    display: none;
+                                }
+
+                                &.error {
+                                    background: #FC9D9A;
+                                }
+
+                                &.success {
+                                    background: #A7DBD8;
+                                }
+                            }
+                        }
+                    }
+                } // .container-inner
+            } // .container
+        } // .container-outer
+    } // body
+} // html
