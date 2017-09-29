@@ -1,5 +1,7 @@
 @import 'mixins';
 
+$highlight-colour: #69D2E7;
+
 body, html, div {
     display: flex;
     margin: 0;
@@ -48,7 +50,7 @@ html {
                             &.selected {
                                 @include backgroundHover(#fafafa);
                                 @include backgroundClick(#fafafa);    
-                                border-right: 5px solid #69D2E7;
+                                border-right: 5px solid $highlight-colour;
                             }
 
                             & > .number {
@@ -87,6 +89,10 @@ html {
                             flex-grow: 1;
                             flex-direction: column;
 
+                            & > * {
+                                flex-shrink: 0;
+                            }
+
                             .title {
                                 font-size: 14px;
                                 font-weight: 600;
@@ -110,7 +116,7 @@ html {
                                 flex-shrink: 1;
                                 padding: 15px;
                                 background: #ccc;
-                                font-family: 'Inconsolata' monospace;
+                                font-family: 'Inconsolata', monospace;
                                 font-size: 14px;
                                 border-radius: 5px;
                             }
@@ -131,12 +137,16 @@ html {
                                         padding: 5px 8px;
                                         font: 200 14px 'Open Sans';
                                         flex-grow: 1;
+
+                                        &.highlight {
+                                            border: 4px solid $highlight-colour;
+                                        }
                                     }
                                 }
                             }
 
                             .command-actions {
-                                margin-left: 15px;
+                                padding: 0 15px 15px 15px;
 
                                 .run {
                                     align-items: center;
@@ -145,8 +155,8 @@ html {
                                     font-weight: 600;
                                     color: #fff;
                                     cursor: pointer;
-                                    @include backgroundHover(#69D2E7);
-                                    @include backgroundClick(#69D2E7);
+                                    @include backgroundHover($highlight-colour);
+                                    @include backgroundClick($highlight-colour);
 
                                     span {
                                         margin-right: 5px;
@@ -155,16 +165,42 @@ html {
                                 }
                             }
 
+                            .output-files {
+                                font-size: 14px;
+                                padding: 15px;
+                                flex-direction: column;
+                                background: #fafafa;
+
+                                .header {
+                                    margin-bottom: 10px;
+                                    font-weight: 600;
+                                }
+
+                                .output-file {
+                                    cursor: pointer;
+                                    text-decoration: underline;
+                                    @include foregroundHover($highlight-colour);
+                                    @include foregroundClick($highlight-colour);
+                                }
+                            }
+
                             .command-output {
                                 flex-grow: 1;
-                                padding: 15px;
+                                flex-shrink: 1;
+                                padding: 15px 15px 0;
                                 background: #eee;
-                                font-family: 'Inconsolata' monospace;
+                                font-family: 'Inconsolata', monospace;
                                 font-size: 14px;
-                                margin-top: 15px;
+                                white-space: pre-wrap;
+                                overflow: auto;
+                                flex-direction: column;
 
-                                &:empty {
-                                    display: none;
+                                /* Hacky fix for bottom padding in overflow:auto containers
+                                see https://stackoverflow.com/questions/10722367/bottom-padding-not-working-on-overflow-element-in-non-chrome-browsers */
+                                &:after {
+                                    content: "";
+                                    height: 15px;
+                                    flex-shrink: 0;
                                 }
 
                                 &.error {
@@ -173,6 +209,17 @@ html {
 
                                 &.success {
                                     background: #A7DBD8;
+                                }
+                            }
+
+                            .stdin-outer {
+
+                                input {
+                                    flex-grow: 1;
+                                    padding: 10px 15px;
+                                    border: 0;
+                                    font: 200 14px 'Inconsolata';
+                                    outline: none;
                                 }
                             }
                         }
