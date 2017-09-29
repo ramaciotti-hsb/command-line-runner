@@ -1,4 +1,4 @@
-@import 'mixins';
+@import './mixins';
 
 $highlight-colour: #69D2E7;
 
@@ -125,12 +125,13 @@ html {
 
                                 .parameter {
                                     font-size: 14px;
-                                    align-items: center;
+                                    align-items: stretch;
                                     margin-bottom: 10px;
 
                                     .parameter-name {
                                         margin-right: 15px;
                                         width: 100px;
+                                        align-items: center;
                                     }
 
                                     .parameter-input {
@@ -142,21 +143,49 @@ html {
                                             border: 4px solid $highlight-colour;
                                         }
                                     }
+
+                                    .file-select {
+                                        align-items: center;
+                                        padding: 0 10px;
+                                        cursor: pointer;
+                                        margin-left: 15px;
+                                        @include backgroundHover(#eee);
+                                        @include backgroundClick(#eee);
+
+                                        i {
+                                            font-size: 18px;
+                                            margin-right: 5px;
+                                        }
+                                    }
                                 }
                             }
 
                             .command-actions {
                                 padding: 0 15px 15px 15px;
 
-                                .run {
+                                .run, .save {
                                     align-items: center;
                                     padding: 8px 12px;
                                     background: #ccc;
                                     font-weight: 600;
                                     color: #fff;
                                     cursor: pointer;
-                                    @include backgroundHover($highlight-colour);
-                                    @include backgroundClick($highlight-colour);
+                                    margin-right: 15px;
+
+                                    &:last-child {
+                                        margin-right: 0;
+                                    }
+
+                                    &.run {
+                                        @include backgroundHover($highlight-colour);
+                                        @include backgroundClick($highlight-colour);
+                                    }
+
+                                    &.save {
+                                        color: #333;
+                                        @include backgroundHover(#C4F0F6);
+                                        @include backgroundClick(#C4F0F6);
+                                    }
 
                                     span {
                                         margin-right: 5px;
