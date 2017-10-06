@@ -1,11 +1,65 @@
 @import './mixins';
 
 $highlight-colour: #69D2E7;
+$red-colour: #C02942;
 
 body, html, div {
     display: flex;
     margin: 0;
     padding: 0;
+}
+
+input {
+    outline: none;
+}
+
+.dropdown {
+    position: relative;
+    cursor: pointer;
+
+    &.active {
+
+        .type-selected {
+
+            .text {
+                color: #888;
+            }
+        }
+
+        .dropdown-inner {
+            display: flex;
+        }
+    }
+
+    .type-selected {
+        align-items: center;
+        flex-grow: 1;
+
+        .text {
+            flex-grow: 1;
+        }
+    }
+
+    .dropdown-inner {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: -1px;
+        flex-direction: column;
+        z-index: 1;
+        width: 100%;
+        border: 1px solid #ccc;
+
+        .item {
+            padding: 0 10px;
+            height: 30px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            align-items: center;
+            @include backgroundHover(#fff);
+            @include backgroundClick(#fff);
+        }
+    }
 }
 
 html {
@@ -25,9 +79,19 @@ html {
                 flex-grow: 1;
                 flex-direction: column;
 
-                & > .header {
-                    padding: 0 20px;
-                    border-bottom: 1px solid #eee;
+                & > .tab-bar {
+                    background: #ddd;
+                    align-items: stretch;
+                    height: 30px;
+                    flex-shrink: 0;
+
+                    .tab {
+                        font-size: 12px;
+                        background: #eee;
+                        width: 150px;
+                        padding: 0 15px;
+                        align-items: center;
+                    }
                 }
 
                 .container-inner {
@@ -66,7 +130,7 @@ html {
                                 flex-direction: column;
 
                                 & > .title {
-                                    font-size: 14px;
+                                    font-size: 12px;
                                     margin-bottom: 5px;
                                     font-weight: 600;
                                     color: #666;
@@ -83,6 +147,16 @@ html {
                             padding: 15px;
                             font-size: 20px;
                             font-weight: 200;
+                            align-items: stretch;
+
+                            input {
+                                outline: none;
+                                border: 2px solid #eee;
+                                padding: 15px;
+                                font-size: inherit;
+                                font-weight: 600;
+                                flex-grow: 1;
+                            }
                         }
 
                         .panel-inner {
@@ -93,15 +167,35 @@ html {
                                 flex-shrink: 0;
                             }
 
+                            input[type="text"][class*="edit"] {
+                                padding: 5px 8px;
+                                font: 200 12px 'Open Sans';
+                                flex-grow: 1;
+                            }
+
+                            .file-select {
+                                align-items: center;
+                                padding: 0 10px;
+                                cursor: pointer;
+                                margin-left: 15px;
+                                @include backgroundHover(#eee);
+                                @include backgroundClick(#eee);
+
+                                i {
+                                    font-size: 18px;
+                                    margin-right: 5px;
+                                }
+                            }
+
                             .title {
-                                font-size: 14px;
+                                font-size: 12px;
                                 font-weight: 600;
                                 color: #888;
                                 margin-bottom: 10px;
                             }
 
                             .body {
-                                font-size: 14px;
+                                font-size: 12px;
                                 font-weight: 400;
                                 color: #333;
                             }
@@ -117,14 +211,14 @@ html {
                                 padding: 15px;
                                 background: #ccc;
                                 font-family: 'Inconsolata', monospace;
-                                font-size: 14px;
+                                font-size: 12px;
                                 border-radius: 5px;
                             }
 
                             .command-parameters {
 
                                 .parameter {
-                                    font-size: 14px;
+                                    font-size: 12px;
                                     align-items: stretch;
                                     margin-bottom: 10px;
 
@@ -136,7 +230,7 @@ html {
 
                                     .parameter-input {
                                         padding: 5px 8px;
-                                        font: 200 14px 'Open Sans';
+                                        font: 200 12px 'Open Sans';
                                         flex-grow: 1;
 
                                         &.highlight {
@@ -144,18 +238,51 @@ html {
                                         }
                                     }
 
-                                    .file-select {
+                                    .edit-parameter-name-outer {
+                                        flex-grow: 1;
+                                        max-width: 320px;
+                                        margin-right: 15px;
+                                        position: relative;
                                         align-items: center;
-                                        padding: 0 10px;
-                                        cursor: pointer;
-                                        margin-left: 15px;
-                                        @include backgroundHover(#eee);
-                                        @include backgroundClick(#eee);
 
                                         i {
+                                            margin-top: -1px;
+                                            right: 10px;
                                             font-size: 18px;
-                                            margin-right: 5px;
+                                            position: absolute;
+                                            cursor: pointer;
+                                            @include foregroundHover($red-colour, 15%);
+                                            @include foregroundClick($red-colour, 30%);
                                         }
+                                        
+                                        .edit-parameter-name {
+                                            flex-grow: 1;
+                                        }
+                                    }
+
+                                    .edit-parameter-type {
+                                        align-items: center;
+                                        width: 100px;
+                                        padding: 0 10px;
+                                        border: 1px solid #ccc;
+                                    }
+                                }
+                                .add-parameter {
+                                    font: 200 12px 'Open Sans';
+                                    align-items: center;
+                                    height: 31px;
+                                    margin-bottom: 15px;
+                                    padding: 0 10px;
+                                    width: 300px;
+                                    cursor: pointer;
+                                    @include backgroundHover(#eee);
+                                    @include backgroundClick(#eee);
+                                    @include foregroundHover(#999);
+                                    @include foregroundClick(#999);
+
+                                    i {
+                                        margin-right: 5px;
+                                        font-size: 16px;
                                     }
                                 }
                             }
@@ -163,39 +290,43 @@ html {
                             .command-actions {
                                 padding: 0 15px 15px 15px;
 
-                                .run, .save {
+                                .run, .save, .export, .edit, .cancel {
                                     align-items: center;
                                     padding: 8px 12px;
-                                    background: #ccc;
                                     font-weight: 600;
-                                    color: #fff;
                                     cursor: pointer;
                                     margin-right: 15px;
+                                    font-size: 12px;
+                                    @include foregroundHover(#222);
+                                    @include foregroundClick(#222);
+                                    @include backgroundHover(#ccc);
+                                    @include backgroundClick(#ccc);
 
                                     &:last-child {
                                         margin-right: 0;
                                     }
 
                                     &.run {
+                                        @include foregroundHover(#fff);
+                                        @include foregroundClick(#fff);
                                         @include backgroundHover($highlight-colour);
                                         @include backgroundClick($highlight-colour);
                                     }
 
-                                    &.save {
-                                        color: #333;
+                                    &.save, &.edit, &.export {
                                         @include backgroundHover(#C4F0F6);
                                         @include backgroundClick(#C4F0F6);
                                     }
 
                                     span {
                                         margin-right: 5px;
-                                        font-size: 20px;
+                                        font-size: 16px;
                                     }
                                 }
                             }
 
                             .output-files {
-                                font-size: 14px;
+                                font-size: 12px;
                                 padding: 15px;
                                 flex-direction: column;
                                 background: #fafafa;
@@ -219,7 +350,7 @@ html {
                                 padding: 15px 15px 0;
                                 background: #eee;
                                 font-family: 'Inconsolata', monospace;
-                                font-size: 14px;
+                                font-size: 12px;
                                 white-space: pre-wrap;
                                 overflow: auto;
                                 flex-direction: column;
