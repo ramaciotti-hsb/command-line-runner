@@ -1,4 +1,5 @@
 node_modules/
-Electron.app
 .DS_Store
 yarn-error.log
+dist/
+production/

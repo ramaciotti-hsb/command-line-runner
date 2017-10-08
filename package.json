@@ -1,21 +1,25 @@
 {
-  "name": "command-pipeline",
+  "name": "command-line-runner",
   "version": "0.0.1",
-  "author": "",
+  "author": "Nic Barker",
   "description": "An atom based graphical interface for running command line utilities.",
   "main": "main.js",
   "scripts": {
     "start": "webpack-dev-server --open --config webpack.dev.js",
-    "build": "webpack --config webpack.production.js"
+    "build": "webpack --config webpack.production.js",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
   },
   "build": {
     "appId": "command.line.runner",
     "mac": {
       "category": "utilities"
-    }
+    },
+    "files": ["*", "production/*"]
   },
   "license": "ISC",
   "dependencies": {
+    "electron-is-dev": "^0.3.0",
     "lodash": "^4.17.4",
     "path": "^0.12.7",
     "react": "^15.6.1",
@@ -29,6 +33,8 @@
     "babel-preset-es2017": "^6.24.1",
     "babel-preset-react": "^6.24.1",
     "css-loader": "^0.28.7",
+    "electron-builder": "^19.34.1",
+    "electron-osx-sign": "^0.4.7",
     "extract-text-webpack-plugin": "^3.0.0",
     "html-webpack-plugin": "^2.30.1",
     "node-sass": "^4.5.3",

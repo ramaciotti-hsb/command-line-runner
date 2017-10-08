@@ -1,16 +1,9 @@
 const path = require('path');
 
-const HtmlPlugin = require('html-webpack-plugin')
-const htmlPlugin = new HtmlPlugin({
-    template: './index.html',
-    filename: 'index.html',
-    inject: 'body'
-})
-
 module.exports = {
     entry: './js/application.js',
     output: {
-        path: path.resolve(__dirname, './build'),
+        path: path.resolve(__dirname, './webpack-build'),
         filename: 'app.bundle.js'
     },
     module: {
@@ -19,6 +12,5 @@ module.exports = {
             { test: /\.jsx$/, loader: 'babel-loader', exclude: /node_modules/ },
         ]
     },
-    plugins: [htmlPlugin],
     target: 'electron'
 }

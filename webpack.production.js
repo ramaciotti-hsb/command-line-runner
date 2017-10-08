@@ -1,7 +1,15 @@
-const merge = require('webpack-merge');
-const common = require('./webpack.common.js');
+const merge = require('webpack-merge')
+const common = require('./webpack.common.js')
+const webpack = require('webpack')
 const MinifyPlugin = require('babel-minify-webpack-plugin')
-const ExtractTextPlugin = require("extract-text-webpack-plugin");
+const ExtractTextPlugin = require("extract-text-webpack-plugin")
+const HtmlPlugin = require('html-webpack-plugin')
+
+const htmlPlugin = new HtmlPlugin({
+    template: './index.production.html',
+    filename: 'index.html',
+    inject: 'body'
+})
 
 const extractSass = new ExtractTextPlugin({
     filename: "app.bundle.css"
@@ -9,7 +17,15 @@ const extractSass = new ExtractTextPlugin({
 
 module.exports = merge(common, {
     plugins: [
-        new MinifyPlugin(), extractSass
+        new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
+        new webpack.DefinePlugin({
+            'process.env': {
+                'NODE_ENV': JSON.stringify('production')
+            }
+        }),
+        new MinifyPlugin({}, { comments: false }),
+        extractSass,
+        htmlPlugin
     ],
     module: {
         rules: [{
