@@ -4,7 +4,7 @@ import { Component } from 'react'
 import { shell } from 'electron'
 import path from 'path'
 
-export default class Container extends Component {
+export default class ScriptView extends Component {
     scrollOutputToBottom () {
         const outputContainer = ReactDOM.findDOMNode(this.refs.commandOutput)
         outputContainer.scrollTop = outputContainer.scrollHeight
@@ -90,7 +90,7 @@ export default class Container extends Component {
         }
 
         return (
-            <div className='panel'>
+            <div className='panel script'>
                 <div className='header'>{this.props.title}</div>
                 <div className='panel-inner'>
                     <div className='working-directory'>
@@ -117,15 +117,15 @@ export default class Container extends Component {
                             <span className="lnr lnr-cross-circle"></span>
                             Kill
                         </div>
-                        <div className='edit' onClick={this.props.toggleEditModeForScript}>
+                        <div className='edit' onClick={this.props.toggleEditModeForItem}>
                             <span className="lnr lnr-pencil"></span>
                             Edit Script
                         </div>
-                        <div className='export' onClick={this.props.exportScriptToFile}>
+                        <div className='export' onClick={this.props.exportItemToFile}>
                             <span className="lnr lnr-download"></span>
                             Export Script
                         </div>
-                        <div className='delete' onClick={this.props.deleteScript}>
+                        <div className='delete' onClick={this.props.deleteItem}>
                             <span className="lnr lnr-cross-circle"></span>
                             Delete Script
                         </div>

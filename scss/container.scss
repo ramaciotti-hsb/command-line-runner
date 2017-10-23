@@ -398,9 +398,22 @@ html {
                                     font: 200 14px 'Inconsolata';
                                     outline: none;
                                 }
+                            } // .stdin-outer
+                        } // .panel-inner
+
+                        &.documentation {
+
+                            .body {
+                                margin: 0 15px 15px 15px;
+                                border-top: 1px solid #eee;
+                                display: block;
+
+                                &.edit {
+                                    border: 2px solid #eee;
+                                }
                             }
                         }
-                    }
+                    } // .panel
                 } // .container-inner
             } // .container
         } // .container-outer

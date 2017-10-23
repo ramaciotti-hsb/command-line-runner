@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom'
 import { Component } from 'react'
 import _ from 'lodash'
 
-export default class Container extends Component {
+export default class ScriptEdit extends Component {
     constructor (props) {
         super(props)
         this.state = {
@@ -26,17 +26,17 @@ export default class Container extends Component {
 
     handleWorkingDirectoryFileDrop (event) {
         const value = event.dataTransfer.files[0].path
-        this.props.updateScript(this.props.id, 'workingDirectory', value)
+        this.props.updateItem('workingDirectory', value)
     }
 
     updateCommand (event) {
         // Split the command on spaces that aren't inside quotes
         let extraSpace = event.target.value[event.target.value.length - 1] === ' '
-        this.props.updateScript(this.props.id, 'command', event.target.value.match(/(?:[^\s"]+|"[^"]*")+/g).concat(extraSpace ? [' '] : []))
+        this.props.updateItem('command', event.target.value.match(/(?:[^\s"]+|"[^"]*")+/g).concat(extraSpace ? [' '] : []))
     }
 
-    scriptInputChange (key, event) {
-        this.props.updateScript(this.props.id, key, event.target.value)
+    itemInputChange (key, event) {
+        this.props.updateItem(key, event.target.value)
     }
 
     parameterInputChange (parameterId, key, event) {
@@ -82,20 +82,20 @@ export default class Container extends Component {
         })
 
         return (
-            <div className='panel'>
-                <div className='header'><input type='text' value={this.props.title} onChange={this.scriptInputChange.bind(this, 'title')}/></div>
+            <div className='panel script'>
+                <div className='header'><input type='text' value={this.props.title} onChange={this.itemInputChange.bind(this, 'title')}/></div>
                 <div className='panel-inner'>
                     <div className='description'>
                         <div className='title'>Description</div>
                         <div className='body'>
-                            <textarea placeholder={'Type a description for this script'} value={this.props.description} onChange={this.scriptInputChange.bind(this, 'description')}/>
+                            <textarea placeholder={'Type a description for this item'} value={this.props.description} onChange={this.itemInputChange.bind(this, 'description')}/>
                         </div>
                     </div>
                     <div className='working-directory'>
                         <div className='title'>Working Directory</div>
                         <div className='body'>
-                            <input type='text' className='edit-working-directory' value={this.props.workingDirectory} onChange={this.scriptInputChange.bind(this, 'workingDirectory')} onDrop={this.handleWorkingDirectoryFileDrop.bind(this)} />
-                            <div className='file-select' onClick={this.props.openFileForScriptDialog.bind(null, this.props.id, 'workingDirectory', ['openDirectory'])}>
+                            <input type='text' className='edit-working-directory' value={this.props.workingDirectory} onChange={this.itemInputChange.bind(this, 'workingDirectory')} onDrop={this.handleWorkingDirectoryFileDrop.bind(this)} />
+                            <div className='file-select' onClick={this.props.openFileForItemDialog.bind(null, this.props.id, 'workingDirectory', ['openDirectory'])}>
                                 <i className='lnr lnr-enter'></i>
                                 Select Directory
                             </div>

@@ -10,8 +10,11 @@ import path from 'path'
 import fs from 'fs'
 import ScriptView from './script-view.jsx'
 import ScriptEdit from './script-edit.jsx'
+import DocumentationView from './documentation-view.jsx'
+import DocumentationEdit from './documentation-edit.jsx'
 import kill from 'tree-kill'
 import shellPath from 'shell-path'
+import homePath from 'user-home'
 const childProcess = require('child_process')
 
 export default class Container extends Component {
@@ -20,17 +23,18 @@ export default class Container extends Component {
         super(props)
         this.state = {
             collectionTitle: 'New Collection',
-            scripts: []
+            items: []
         }
 
         const template = [
             {
                 label: 'File',
                 submenu: [
-                    {label: 'New Script', accelerator: 'Cmd+N', click: this.newScript.bind(this) },
+                    {label: 'New Script Item', accelerator: 'Cmd+N', click: this.newScriptItem.bind(this) },
+                    {label: 'New Documentation Item', accelerator: 'Cmd+Shift+D', click: this.newDocumentationItem.bind(this) },
                     {label: 'New Collection', accelerator: 'Cmd+Shift+N'},
                     {label: 'Save Collection', accelerator: 'Cmd+S', click: this.showSaveCollectionAsDialogBox.bind(this) },
-                    {label: 'Open Script(s)', accelerator: 'Cmd+Shift+O', click: this.showOpenScriptDialog.bind(this) },
+                    {label: 'Open Item(s)', accelerator: 'Cmd+Shift+O', click: this.showOpenItemDialog.bind(this) },
                     {label: 'Open Collection(s)',  accelerator: 'Cmd+O', click: this.showOpenCollectionsDialog.bind(this) }
                 ]
             },
@@ -121,14 +125,14 @@ export default class Container extends Component {
         const menu = Menu.buildFromTemplate(template)
         Menu.setApplicationMenu(menu)
 
-        // Load the collections and scripts the user last had open when the app was used
+        // Load the collections and items the user last had open when the app was used
         const sessionFilePath = path.join(remote.app.getPath('userData'), 'session.json')
         try {
             const session = JSON.parse(fs.readFileSync(sessionFilePath))
-            for (let script of session.scripts) {
-                if (script.running) {
-                    script.running = false
-                    script.status = 'error'
+            for (let item of session.items) {
+                if (item.running) {
+                    item.running = false
+                    item.status = 'error'
                 }
             }
             this.state = _.merge(this.state, session)
@@ -145,57 +149,78 @@ export default class Container extends Component {
     saveSessionState () {
         const sessionFilePath = path.join(remote.app.getPath('userData'), 'session.json')
         // Prevent runtime state information such as running commands and stdout from being saved to the collection file
-        for (let script of this.state.scripts) {
-            script.toJSON = function () {
+        for (let item of this.state.items) {
+            item.toJSON = function () {
                 return _.omit(this, [ 'runningCommand' ])
             };
         }
         fs.writeFile(sessionFilePath, JSON.stringify(this.state, null, 4), () => {})
     }
 
-    newScript () {
+    newScriptItem () {
         const newId = uuidv4()
-        this.state.scripts.push({
-            "id": newId,
-            "title": "New Script",
-            "description": "",
-            "workingDirectory": "",
-            "command": [],
-            "parameters": [],
+        this.state.items.push({
+            id: newId,
+            type: "script",
+            title: "New Item",
+            description: "",
+            workingDirectory: "",
+            command: [],
+            parameters: [],
             editing: true,
             outputFile: {
                 type: 'none'
             }
         })
         this.setState({
-            scripts: this.state.scripts,
-            selectedScriptId: newId
+            items: this.state.items,
+            selectedItemId: newId
         })
         this.saveSessionState()
     }
 
-    deleteScript (scriptId) {
-        const scriptIndex = _.findIndex(this.state.scripts, (item) => {
-            return item.id === scriptId
+    newDocumentationItem () {
+        const newId = uuidv4()
+        this.state.items.push({
+            id: newId,
+            type: "documentation",
+            title: "New Documentation Item",
+            editing: true,
+            body: "",
         })
-
-        if (scriptIndex === -1) { return }
-        this.state.scripts.splice(scriptIndex, 1)
         this.setState({
-            scripts: this.state.scripts
+            items: this.state.items,
+            selectedItemId: newId
         })
         this.saveSessionState()
     }
 
-    openScriptFiles (paths) {
+    deleteItem (itemId) {
+        let itemIndex = _.findIndex(this.state.items, (item) => {
+            return item.id === itemId
+        })
+
+        if (itemIndex === -1) { return }
+        this.state.items.splice(itemIndex, 1)
+        if (itemIndex === this.state.items.length) {
+            itemIndex--
+        }
+        this.setState({
+            items: this.state.items,
+            selectedItemId: this.state.items[itemIndex].id
+        })
+        this.saveSessionState()
+    }
+
+    openItemFiles (paths) {
         const toReturn = []
-        // Let the user open a saved template of a script or collection file
+        // Let the user open a saved template of a item or collection file
         if (paths) {
             // Loop through if multiple files were selected
             for (let path of paths) {
-                const script = JSON.parse(fs.readFileSync(path))
-                script.path = path
-                toReturn.push(script)
+                const item = JSON.parse(fs.readFileSync(path))
+                item.path = path
+                toReturn.push(item)
             }
         }
         return toReturn
@@ -214,14 +239,14 @@ export default class Container extends Component {
         return toReturn
     }
 
-    exportScriptToFile (scriptId) {
-        const script = _.find(this.state.scripts, item => item.id === scriptId)
+    exportItemToFile (itemId) {
+        const item = _.find(this.state.items, item => item.id === itemId)
 
-        if (!script) { return }
+        if (!item) { return }
 
-        dialog.showSaveDialog({ title: `Save ${script.title}`, defaultPath: script.workingDirectory.replace('\\', '') + script.title.replace(/\ /g, '-').toLowerCase() + '.json', message: `Save ${script.title}` }, (path) => {
+        dialog.showSaveDialog({ title: `Save ${item.title}`, defaultPath: (item.workingDirectory ? item.workingDirectory.replace('\\', '') : homePath) + item.title.replace(/\ /g, '-').toLowerCase() + '.json', message: `Save ${item.title}` }, (path) => {
             if (path) {
-                fs.writeFile(path, JSON.stringify(script, null, 4), function(err) {
+                fs.writeFile(path, JSON.stringify(item, null, 4), function(err) {
                     if(err) {
                         return console.log(err);
                     }
@@ -236,8 +261,8 @@ export default class Container extends Component {
         dialog.showSaveDialog({ title: `Save Collection As:`, message: `Save Collection As:`, defaultPath: this.state.collectionTitle.replace(/\ /g, '-').toLowerCase() + '.json' }, (path) => {
             if (path) {
                 // Prevent runtime state information such as running commands and stdout from being saved to the collection file
-                for (let script of this.state.scripts) {
-                    script.toJSON = function () {
+                for (let item of this.state.items) {
+                    item.toJSON = function () {
                         return _.omit(this, [ 'path', 'runningCommand', 'running', 'error', 'output', 'status', 'stdinInputValue'])
                     };
                 }
@@ -262,11 +287,11 @@ export default class Container extends Component {
         })
     }
 
-    showOpenScriptDialog () {
-        dialog.showOpenDialog({ title: `Open Script File`, filters: [{ name: 'CLR script templates', extensions: ['json']}], message: `Open Script File`, properties: ['openFile', 'multiSelections'] }, (paths) => {
-            const scripts = this.openScriptFiles(paths)
+    showOpenItemDialog () {
+        dialog.showOpenDialog({ title: `Open Item File`, filters: [{ name: 'CLR item templates', extensions: ['json']}], message: `Open Item File`, properties: ['openFile', 'multiSelections'] }, (paths) => {
+            const items = this.openItemFiles(paths)
             this.setState({
-                scripts: this.state.scripts.concat(scripts)
+                items: this.state.items.concat(items)
             }, () => {
                 // Save the session state after opening new files
                 this.saveSessionState()
@@ -278,72 +303,76 @@ export default class Container extends Component {
     openFileForParameterDialog (parameterId, dialogOptions) {
         // Find the parameter
         let parameter
-        let script
-        for (let item of this.state.scripts) {
-            parameter = _.find(item.parameters, { id: parameterId })
+        let item
+        for (let i of this.state.items) {
+            parameter = _.find(i.parameters, { id: parameterId })
             if (parameter) {
-                script = item
+                item = i
                 break
             }
         }
+        console.log(parameter)
         if (!parameter) { return }
+        if (!item) { return }
 
-        dialog.showOpenDialog({ title: `Select ${parameter.parameter}`, defaultPath: script.workingDirectory.replace('\\', ''), message: `Select ${parameter.parameter}`, properties: dialogOptions }, (path) => {
+        dialog.showOpenDialog({ title: `Select ${parameter.parameter}`, defaultPath: (item.workingDirectory ? item.workingDirectory.replace('\\', '') : homePath), message: `Select ${parameter.parameter}`, properties: dialogOptions }, (path) => {
             if (path) {
                 parameter.value = path[0]
                 this.setState({
-                    scripts: this.state.scripts
+                    items: this.state.items
                 })
             }
         })
     }
 
-    // Select a file from the filesystem and use it for a script attribute (working directory, etc)
-    openFileForScriptDialog (scriptId, key, dialogOptions) {
-        const script = _.find(this.state.scripts, (item) => {
-            return item.id === scriptId
+    // Select a file from the filesystem and use it for a item attribute (working directory, etc)
+    openFileForItemDialog (itemId, key, dialogOptions) {
+        const item = _.find(this.state.items, (item) => {
+            return item.id === itemId
         })
 
-        if (!script) { return }
+        if (!item) { return }
 
-        dialog.showOpenDialog({ title: `Select ${key}`, defaultPath: script.workingDirectory.replace('\\', ''), message: `Select ${key}`, properties: dialogOptions }, (path) => {
+        dialog.showOpenDialog({ title: `Select ${key}`, defaultPath: (item.workingDirectory ? item.workingDirectory.replace('\\', '') : homePath), message: `Select ${key}`, properties: dialogOptions }, (path) => {
             if (path) {
-                script[key] = path[0]
+                item[key] = path[0]
                 this.setState({
-                    scripts: this.state.scripts
+                    items: this.state.items
                 })
             }
         })
     }
 
     // Run a command line utility, command is input as an array of arguments
-    runCommand (scriptId) {
-        const script = _.find(this.state.scripts, (item) => {
-            return item.id === scriptId
+    runCommand (itemId) {
+        const item = _.find(this.state.items, (item) => {
+            return item.id === itemId
         })
 
-        if (!script) { return }
+        if (!item) { return }
 
-        const commandArray = [].concat(script.command)
+        const commandArray = [].concat(item.command)
         // Add any defined parameters to the command
-        script.parameters.map((parameter) => {
+        item.parameters.map((parameter) => {
             if (parameter.value) {
                 commandArray.push(parameter.parameter)
                 commandArray.push(parameter.value)
             }
         })
 
-        script.running = true
-        script.output = commandArray.join(' ') + "\n\n"
-        if (script.sudo) {
-            this.runCommandSudo(script, commandArray)
+        item.running = true
+        item.output = commandArray.join(' ') + "\n\n"
+        if (item.sudo) {
+            this.runCommandSudo(item, commandArray)
             return
         }
 
-        script.runningCommand = childProcess.spawn(commandArray[0], commandArray.slice(1), { cwd: script.workingDirectory, env: {'PATH': shellPath.sync()} })
+        const commandArguments = commandArray.slice(1).map(c => c.replace(/\ /g, '\\ '))
+        console.log(commandArguments)
+        item.runningCommand = childProcess.spawn(commandArray[0], commandArguments, { cwd: (item.workingDirectory ? item.workingDirectory.replace('\\', '') : homePath), shell: true })
 
         // Catch spawn errors
-        script.runningCommand.on('error', (error) => {
+        item.runningCommand.on('error', (error) => {
             if (error.code === 'ENOENT') {
                 writeStdout(`Error: ${commandArray[0]} was not found. Perhaps it is not installed?`)
             } else {
@@ -352,31 +381,31 @@ export default class Container extends Component {
         })
 
         this.setState({
-            scripts: this.state.scripts
+            items: this.state.items
         })
 
         let writeStdout = (data) => {
-            script.output += data + "\n"
+            item.output += data + "\n"
             // Limit the output buffer to 1000 characters
-            if (script.output.length > 20000) {
-                script.output = script.output.substring(script.output.length - 20000)
+            if (item.output.length > 20000) {
+                item.output = item.output.substring(item.output.length - 20000)
             }
             this.setState({
-                scripts: this.state.scripts
+                items: this.state.items
             }, () => {
                 // Scroll output container to bottom
-                this.refs.scriptView.scrollOutputToBottom()
+                this.refs.itemView.scrollOutputToBottom()
             })
         }
 
-        script.runningCommand.stdout.on('data', writeStdout);
-        script.runningCommand.stderr.on('data', writeStdout);
+        item.runningCommand.stdout.on('data', writeStdout);
+        item.runningCommand.stderr.on('data', writeStdout);
 
-        script.runningCommand.on( 'close', code => {
-            script.running = false
-            script.status = code !== 0 ? 'error' : 'success'
+        item.runningCommand.on( 'close', code => {
+            item.running = false
+            item.status = code !== 0 ? 'error' : 'success'
             this.setState({
-                scripts: this.state.scripts
+                items: this.state.items
             }, () => {
                 this.saveSessionState()
             })
@@ -385,22 +414,22 @@ export default class Container extends Component {
     }
 
     // Run a command using sudo
-    runCommandSudo (script, commandArray) {
+    runCommandSudo (item, commandArray) {
         let spawner = new sudo()
-        spawner.spawn(commandArray[0], commandArray.slice(1), { cwd: script.workingDirectory }).then((cp) => {
-            script.output += 'Running a command as root / administrator, no output will be available until it\'s finished.\n'
+        spawner.spawn(commandArray[0], commandArray.slice(1), { cwd: (item.workingDirectory ? item.workingDirectory.replace('\\', '') : homePath), env: { 'PATH': shellPath.sync(), 'HOME': homePath } }).then((cp) => {
+            item.output += 'Running a command as root / administrator, no output will be available until it\'s finished.\n'
             this.setState({
-                scripts: this.state.scripts
+                items: this.state.items
             })
 
             cp.on('close', (code) => {
-                script.output += cp.output.stdout.toString()
-                script.output += cp.output.stderr.toString()
-                this.refs.scriptView.scrollOutputToBottom()
-                script.running = false
-                script.status = code !== 0 ? 'error' : 'success'
+                item.output += cp.output.stdout.toString()
+                item.output += cp.output.stderr.toString()
+                this.refs.itemView.scrollOutputToBottom()
+                item.running = false
+                item.status = code !== 0 ? 'error' : 'success'
                 this.setState({
-                    scripts: this.state.scripts
+                    items: this.state.items
                 }, () => {
                     this.saveSessionState()
                 })
@@ -408,68 +437,68 @@ export default class Container extends Component {
         })
     }
 
-    // Kills a running script
-    killCommand (scriptId) {
-        const script = _.find(this.state.scripts, (item) => {
-            return item.id === scriptId
+    // Kills a running item
+    killCommand (itemId) {
+        const item = _.find(this.state.items, (item) => {
+            return item.id === itemId
         })
 
-        if (!script) { return }
+        if (!item) { return }
         
-        if (script.runningCommand && script.runningCommand.pid) {
-            kill(script.runningCommand.pid);
+        if (item.runningCommand && item.runningCommand.pid) {
+            kill(item.runningCommand.pid);
         }
     }
 
-    selectScript (scriptId) {
+    selectItem (itemId) {
         this.setState({
-            selectedScriptId: scriptId
+            selectedItemId: itemId
         }, () => { this.saveSessionState() })
     }
 
-    toggleEditModeForScript (scriptId) {
-        const script = _.find(this.state.scripts, item => item.id === scriptId)
-        if (script) {
-            script.editing = !script.editing
+    toggleEditModeForItem (itemId) {
+        const item = _.find(this.state.items, item => item.id === itemId)
+        if (item) {
+            item.editing = !item.editing
             this.setState({
-                scripts: this.state.scripts
+                items: this.state.items
             })
         }
         this.saveSessionState()
     }
 
-    saveEditing (scriptId) {
-        const script = _.find(this.state.scripts, item => item.id === scriptId)
-        if (script) {
-            this.toggleEditModeForScript(scriptId)
+    saveEditing (itemId) {
+        const item = _.find(this.state.items, item => item.id === itemId)
+        if (item) {
+            this.toggleEditModeForItem(itemId)
         }
     }
 
-    cancelEditing (scriptId) {
-        const script = _.find(this.state.scripts, item => item.id === scriptId)
-        if (script) {
-            this.toggleEditModeForScript(scriptId)
+    cancelEditing (itemId) {
+        const item = _.find(this.state.items, item => item.id === itemId)
+        if (item) {
+            this.toggleEditModeForItem(itemId)
         }
     }
 
-    // Updates a property of a script
-    updateScript (scriptId, key, value) {
-        const script = _.find(this.state.scripts, (item) => {
-            return item.id === scriptId
+    // Updates a property of a item
+    updateItem (itemId, key, value) {
+        const item = _.find(this.state.items, (item) => {
+            return item.id === itemId
         })
 
-        if (!script) { return }
+        if (!item) { return }
 
-        script[key] = value
+        item[key] = value
         this.setState({
-            scripts: this.state.scripts
+            items: this.state.items
         })
     }
 
     // Updates a property of a parameter
     updateParameter (parameterId, key, value) {
         let parameter
-        for (let item of this.state.scripts) {
+        for (let item of this.state.items) {
             parameter = _.find(item.parameters, { id: parameterId })
             if (parameter) { break }
         }
@@ -477,18 +506,18 @@ export default class Container extends Component {
 
         parameter[key] = value
         this.setState({
-            scripts: this.state.scripts
+            items: this.state.items
         })
     }
 
-    addParameter (scriptId) {
-        const script = _.find(this.state.scripts, (item) => {
-            return item.id === scriptId
+    addParameter (itemId) {
+        const item = _.find(this.state.items, (item) => {
+            return item.id === itemId
         })
 
-        if (!script) { return }
+        if (!item) { return }
 
-        script.parameters.push({
+        item.parameters.push({
             id: uuidv4(),
             parameter: '',
             type: 'text',
@@ -496,31 +525,31 @@ export default class Container extends Component {
         })
 
         this.setState({
-            scripts: this.state.scripts
+            items: this.state.items
         })
     }
 
     deleteParameter (parameterId) {
         let parameterIndex
-        let script
-        for (let item of this.state.scripts) {
+        let item
+        for (let item of this.state.items) {
             parameterIndex = _.findIndex(item.parameters, { id: parameterId })
             if (parameterIndex > 0) {
-                script = item
+                item = item
                 break
             }
         }
         if (!parameterIndex) { return }
 
-        script.parameters.splice(parameterIndex, 1)
+        item.parameters.splice(parameterIndex, 1)
         this.setState({
-            scripts: this.state.scripts
+            items: this.state.items
         })
     }
 
     handleDroppableInputChange (parameterId, event) {
         let parameter
-        for (let item of this.state.scripts) {
+        for (let item of this.state.items) {
             parameter = _.find(item.parameters, { id: parameterId })
             if (parameter) { break }
         }
@@ -531,44 +560,44 @@ export default class Container extends Component {
             parameter.value = event.dataTransfer.files[0].path
         }
         this.setState({
-            scripts: this.state.scripts
+            items: this.state.items
         })
         event.preventDefault()
     }
 
-    handleStdinInputChange(scriptId, event) {
-        const script = _.find(this.state.scripts, item => item.id === scriptId)
+    handleStdinInputChange(itemId, event) {
+        const item = _.find(this.state.items, item => item.id === itemId)
 
-        if (!script) { return }
+        if (!item) { return }
 
-        script.stdinInputValue = event.target.value
+        item.stdinInputValue = event.target.value
 
         this.setState({
-            scripts: this.state.scripts
+            items: this.state.items
         })
     }
 
-    handleStdinKeyPress (scriptId, event) {
-        const script = _.find(this.state.scripts, item => item.id === scriptId)
+    handleStdinKeyPress (itemId, event) {
+        const item = _.find(this.state.items, item => item.id === itemId)
 
-        if (!script) { return }
+        if (!item) { return }
 
         if (event.key === 'Enter') {
-            if (script.runningCommand) {
-                script.runningCommand.stdin.write(script.stdinInputValue + '\n')
-                script.output += script.stdinInputValue + '\n'
-                script.stdinInputValue = ''
+            if (item.runningCommand) {
+                item.runningCommand.stdin.write(item.stdinInputValue + '\n')
+                item.output += item.stdinInputValue + '\n'
+                item.stdinInputValue = ''
                 this.setState({
-                    scripts: this.state.scripts
+                    items: this.state.items
                 })
             }
         }
     }
 
     render () {
-        const collectionsItemsRendered = this.state.scripts.map((item, index) => {
+        const collectionsItemsRendered = this.state.items.map((item, index) => {
             return (
-                <div className={'sidebar-item' + (item.id === this.state.selectedScriptId ? ' selected' : '')} key={index} onClick={this.selectScript.bind(this, item.id)}>
+                <div className={'sidebar-item' + (item.id === this.state.selectedItemId ? ' selected' : '')} key={index} onClick={this.selectItem.bind(this, item.id)}>
                     <div className='number'>#{index + 1}</div>
                     <div className='body'>
                         <div className='title'>{item.title}</div>
@@ -578,34 +607,52 @@ export default class Container extends Component {
             )
         })
 
-        const script = _.find(this.state.scripts, (item) => {
-            return item.id === this.state.selectedScriptId
+        const item = _.find(this.state.items, (item) => {
+            return item.id === this.state.selectedItemId
         })
 
         let panel = <div className='panel'></div>
 
-        if (script && !script.editing) {
-            panel = <ScriptView ref={'scriptView'} {...script}
-                handleDroppableInputChange={this.handleDroppableInputChange.bind(this)}
-                handleStdinKeyPress={this.handleStdinKeyPress.bind(this, script.id)}
-                handleStdinInputChange={this.handleStdinInputChange.bind(this, script.id)}
-                openFileForParameterDialog={this.openFileForParameterDialog.bind(this)}
-                runCommand={this.runCommand.bind(this, script.id)}
-                toggleEditModeForScript={this.toggleEditModeForScript.bind(this, script.id)}
-                exportScriptToFile={this.exportScriptToFile.bind(this, script.id)}
-                killCommand={this.killCommand.bind(this, script.id)}
-                deleteScript={this.deleteScript.bind(this, script.id)}
-            />
-        } else if (script && script.editing) {
-            panel = <ScriptEdit ref={'scriptEdit'} {...script}
-                updateParameter={this.updateParameter.bind(this)}
-                updateScript={this.updateScript.bind(this)}
-                saveEditing={this.saveEditing.bind(this)}
-                cancelEditing={this.cancelEditing.bind(this)}
-                addParameter={this.addParameter.bind(this)}
-                deleteParameter={this.deleteParameter.bind(this)}
-                openFileForScriptDialog={this.openFileForScriptDialog.bind(this)}
-            />
+        if (item) {
+            if (item.type === 'script') {
+                if (!item.editing) {
+                    panel = <ScriptView ref={'itemView'} {...item}
+                        handleDroppableInputChange={this.handleDroppableInputChange.bind(this)}
+                        handleStdinKeyPress={this.handleStdinKeyPress.bind(this, item.id)}
+                        handleStdinInputChange={this.handleStdinInputChange.bind(this, item.id)}
+                        openFileForParameterDialog={this.openFileForParameterDialog.bind(this)}
+                        runCommand={this.runCommand.bind(this, item.id)}
+                        toggleEditModeForItem={this.toggleEditModeForItem.bind(this, item.id)}
+                        exportItemToFile={this.exportItemToFile.bind(this, item.id)}
+                        killCommand={this.killCommand.bind(this, item.id)}
+                        deleteItem={this.deleteItem.bind(this, item.id)}
+                    />
+                } else if (item.editing) {
+                    panel = <ScriptEdit ref={'itemEdit'} {...item}
+                        updateParameter={this.updateParameter.bind(this)}
+                        updateItem={this.updateItem.bind(this, item.id)}
+                        saveEditing={this.saveEditing.bind(this)}
+                        cancelEditing={this.cancelEditing.bind(this)}
+                        addParameter={this.addParameter.bind(this)}
+                        deleteParameter={this.deleteParameter.bind(this)}
+                        openFileForItemDialog={this.openFileForItemDialog.bind(this)}
+                    />
+                }
+            } else if (item.type === 'documentation') {
+                if (!item.editing) {
+                    panel = <DocumentationView ref={'itemView'} {...item}
+                        toggleEditModeForItem={this.toggleEditModeForItem.bind(this, item.id)}
+                        exportItemToFile={this.exportItemToFile.bind(this, item.id)}
+                        deleteItem={this.deleteItem.bind(this, item.id)}
+                    />
+                } else {
+                    panel = <DocumentationEdit ref={'itemEdit'} {...item}
+                        saveEditing={this.saveEditing.bind(this)}
+                        cancelEditing={this.cancelEditing.bind(this)}
+                        updateItem={this.updateItem.bind(this, item.id)}
+                    />
+                }
+            }
         }
 
         const collectionTabs = [<div className='tab' key={1}>{this.state.collectionTitle}</div>]

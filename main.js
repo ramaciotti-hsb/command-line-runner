@@ -2,7 +2,7 @@ const {app, BrowserWindow} = require('electron')
 const path = require('path')
 const url = require('url')
 const isDev = require('electron-is-dev')
-console.log(isDev)
+const open = require('open')
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -26,6 +26,11 @@ function createWindow () {
     // when you should delete the corresponding element.
     win = null
   })
+
+  win.webContents.on('new-window', function(event, url){
+    event.preventDefault();
+    open(url);
+  });
 }
 
 // This method will be called when Electron has finished
