@@ -6,24 +6,30 @@
   "main": "main.js",
   "scripts": {
     "start": "webpack-dev-server --open --config webpack.dev.js",
-    "build": "webpack --config webpack.production.js",
+    "dist": "webpack --config webpack.production.js",
     "pack": "electron-builder --dir",
-    "dist": "electron-builder"
+    "build": "electron-builder"
   },
   "build": {
     "appId": "command.line.runner",
+    "asar": false,
     "mac": {
       "category": "utilities"
     },
-    "files": ["*", "production/*"]
+    "files": [
+      "*",
+      "webpack-build/*"
+    ]
   },
   "license": "ISC",
   "dependencies": {
     "electron-is-dev": "^0.3.0",
+    "electron-sudo": "^4.0.12",
     "lodash": "^4.17.4",
     "path": "^0.12.7",
     "react": "^15.6.1",
     "react-dom": "^15.6.1",
+    "tree-kill": "^1.2.0",
     "uuid": "^3.1.0"
   },
   "devDependencies": {

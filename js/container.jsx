@@ -5,11 +5,13 @@ import uuidv4 from 'uuid/v4'
 import _ from 'lodash'
 import { remote } from 'electron'
 const { dialog, Menu, MenuItem } = remote
+import sudo from 'electron-sudo'
 import path from 'path'
 import fs from 'fs'
 import ScriptView from './script-view.jsx'
 import ScriptEdit from './script-edit.jsx'
-const spawn = require('child_process').spawn
+import kill from 'tree-kill'
+const childProcess = require('child_process')
 
 export default class Container extends Component {
 
@@ -24,11 +26,11 @@ export default class Container extends Component {
             {
                 label: 'File',
                 submenu: [
-                    {label: 'New Script', accelerator: 'Cmd+N'},
+                    {label: 'New Script', accelerator: 'Cmd+N', click: this.newScript.bind(this) },
                     {label: 'New Collection', accelerator: 'Cmd+Shift+N'},
-                    {label: 'Save Collection', accelerator: 'Cmd+S', click: () => { this.showSaveCollectionAsDialogBox() }},
-                    {label: 'Open Script(s)', accelerator: 'Cmd+Shift+O', click: () => { this.showOpenScriptDialog() }},
-                    {label: 'Open Collection(s)',  accelerator: 'Cmd+O', click: () => { this.showOpenCollectionsDialog() }}
+                    {label: 'Save Collection', accelerator: 'Cmd+S', click: this.showSaveCollectionAsDialogBox.bind(this) },
+                    {label: 'Open Script(s)', accelerator: 'Cmd+Shift+O', click: this.showOpenScriptDialog.bind(this) },
+                    {label: 'Open Collection(s)',  accelerator: 'Cmd+O', click: this.showOpenCollectionsDialog.bind(this) }
                 ]
             },
             {
@@ -122,6 +124,12 @@ export default class Container extends Component {
         const sessionFilePath = path.join(remote.app.getPath('userData'), 'session.json')
         try {
             const session = JSON.parse(fs.readFileSync(sessionFilePath))
+            for (let script of session.scripts) {
+                if (script.running) {
+                    script.running = false
+                    script.status = 'error'
+                }
+            }
             this.state = _.merge(this.state, session)
         } catch (error) {
             // If there's no session file, create one
@@ -141,7 +149,28 @@ export default class Container extends Component {
                 return _.omit(this, [ 'runningCommand' ])
             };
         }
-        fs.writeFile(sessionFilePath, JSON.stringify(this.state), () => {})
+        fs.writeFile(sessionFilePath, JSON.stringify(this.state, null, 4), () => {})
+    }
+
+    newScript () {
+        const newId = uuidv4()
+        this.state.scripts.push({
+            "id": newId,
+            "title": "New Script",
+            "description": "",
+            "workingDirectory": "",
+            "command": [],
+            "parameters": [],
+            editing: true,
+            outputFile: {
+                type: 'none'
+            }
+        })
+        this.setState({
+            scripts: this.state.scripts,
+            selectedScriptId: newId
+        })
+        this.saveSessionState()
     }
 
     openScriptFiles (paths) {
@@ -292,7 +321,21 @@ export default class Container extends Component {
 
         script.running = true
         script.output = commandArray.join(' ') + "\n\n"
-        script.runningCommand = spawn(commandArray[0], commandArray.slice(1), { cwd: script.workingDirectory })
+        if (script.sudo) {
+            this.runCommandSudo(script, commandArray)
+            return
+        }
+
+        script.runningCommand = childProcess.spawn(commandArray[0], commandArray.slice(1), { cwd: script.workingDirectory })
+
+        // Catch spawn errors
+        script.runningCommand.on('error', (error) => {
+            if (error.code === 'ENOENT') {
+                writeStdout(`Error: ${commandArray[0]} was not found. Perhaps it is not installed?`)
+            } else {
+                console.log(error)
+            }
+        })
 
         this.setState({
             scripts: this.state.scripts
@@ -300,6 +343,10 @@ export default class Container extends Component {
 
         let writeStdout = (data) => {
             script.output += data + "\n"
+            // Limit the output buffer to 1000 characters
+            if (script.output.length > 20000) {
+                script.output = script.output.substring(script.output.length - 20000)
+            }
             this.setState({
                 scripts: this.state.scripts
             }, () => {
@@ -321,6 +368,43 @@ export default class Container extends Component {
             })
         });
         this.saveSessionState()
+    }
+
+    // Run a command using sudo
+    runCommandSudo (script, commandArray) {
+        let spawner = new sudo()
+        spawner.spawn(commandArray[0], commandArray.slice(1), { cwd: script.workingDirectory }).then((cp) => {
+            script.output += 'Running a command as root / administrator, no output will be available until it\'s finished.\n'
+            this.setState({
+                scripts: this.state.scripts
+            })
+
+            cp.on('close', (code) => {
+                script.output += cp.output.stdout.toString()
+                script.output += cp.output.stderr.toString()
+                this.refs.scriptView.scrollOutputToBottom()
+                script.running = false
+                script.status = code !== 0 ? 'error' : 'success'
+                this.setState({
+                    scripts: this.state.scripts
+                }, () => {
+                    this.saveSessionState()
+                })
+            })
+        })
+    }
+
+    // Kills a running script
+    killCommand (scriptId) {
+        const script = _.find(this.state.scripts, (item) => {
+            return item.id === scriptId
+        })
+
+        if (!script) { return }
+        
+        if (script.runningCommand && script.runningCommand.pid) {
+            kill(script.runningCommand.pid);
+        }
     }
 
     selectScript (scriptId) {
@@ -495,6 +579,7 @@ export default class Container extends Component {
                 runCommand={this.runCommand.bind(this)}
                 toggleEditModeForScript={this.toggleEditModeForScript.bind(this)}
                 exportScriptToFile={this.exportScriptToFile.bind(this)}
+                killCommand={this.killCommand.bind(this)}
             />
         } else if (script && script.editing) {
             panel = <ScriptEdit ref={'scriptEdit'} {...script}

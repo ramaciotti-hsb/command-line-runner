@@ -29,8 +29,10 @@ export default class Container extends Component {
         this.props.updateScript(this.props.id, 'workingDirectory', value)
     }
 
-    updateCommand () {
-        this.props.updateScript(this.props.id, 'command', event.target.value.split(' '))
+    updateCommand (event) {
+        // Split the command on spaces that aren't inside quotes
+        let extraSpace = event.target.value[event.target.value.length - 1] === ' '
+        this.props.updateScript(this.props.id, 'command', event.target.value.match(/(?:[^\s"]+|"[^"]*")+/g).concat(extraSpace ? [' '] : []))
     }
 
     scriptInputChange (key, event) {
@@ -72,6 +74,7 @@ export default class Container extends Component {
                         <div className='dropdown-inner'>
                             <div className={'item' + (parameter.type === 'text' ? ' selected' : '')} onClick={this.setParameterType.bind(this, parameter.id, 'text')}>Text</div>
                             <div className={'item' + (parameter.type === 'file' ? ' selected' : '')} onClick={this.setParameterType.bind(this, parameter.id, 'file')}>File</div>
+                            <div className={'item' + (parameter.type === 'directory' ? ' selected' : '')} onClick={this.setParameterType.bind(this, parameter.id, 'directory')}>Directory / Folder</div>
                         </div>
                     </div>
                 </div>
@@ -80,8 +83,14 @@ export default class Container extends Component {
 
         return (
             <div className='panel'>
-                <div className='header'><input type='text' value={this.props.title} onChange={this.scriptInputChange.bind(this, 'title')}/> </div>
+                <div className='header'><input type='text' value={this.props.title} onChange={this.scriptInputChange.bind(this, 'title')}/></div>
                 <div className='panel-inner'>
+                    <div className='description'>
+                        <div className='title'>Description</div>
+                        <div className='body'>
+                            <textarea placeholder={'Type a description for this script'} value={this.props.description} onChange={this.scriptInputChange.bind(this, 'description')}/>
+                        </div>
+                    </div>
                     <div className='working-directory'>
                         <div className='title'>Working Directory</div>
                         <div className='body'>

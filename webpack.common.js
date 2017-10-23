@@ -1,4 +1,13 @@
-const path = require('path');
+const path  = require('path')
+const fs    = require('fs')
+
+let nodeModules = fs.readdirSync('./node_modules')
+    .filter((module) => {
+        return module !== '.bin';
+    })
+    .reduce((prev, module) => {
+        return Object.assign(prev, {[module]: 'commonjs ' + module});
+    }, {})
 
 module.exports = {
     entry: './js/application.js',
@@ -12,5 +21,10 @@ module.exports = {
             { test: /\.jsx$/, loader: 'babel-loader', exclude: /node_modules/ },
         ]
     },
-    target: 'electron'
+    target: 'electron',
+    node: {
+        /* http://webpack.github.io/docs/configuration.html#node */
+        __dirname: true
+    },
+    externals: nodeModules
 }

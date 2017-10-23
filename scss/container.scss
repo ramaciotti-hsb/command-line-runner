@@ -9,7 +9,7 @@ body, html, div {
     padding: 0;
 }
 
-input {
+input, textarea {
     outline: none;
 }
 
@@ -148,6 +148,7 @@ html {
                             font-size: 20px;
                             font-weight: 200;
                             align-items: stretch;
+                            flex-shrink: 0;
 
                             input {
                                 outline: none;
@@ -167,7 +168,7 @@ html {
                                 flex-shrink: 0;
                             }
 
-                            input[type="text"][class*="edit"] {
+                            input[type="text"][class*="edit"], textarea {
                                 padding: 5px 8px;
                                 font: 200 12px 'Open Sans';
                                 flex-grow: 1;
@@ -200,7 +201,7 @@ html {
                                 color: #333;
                             }
 
-                            .working-directory, .command-string, .command-parameters {
+                            .description, .working-directory, .command-string, .command-parameters {
                                 padding: 0 15px;
                                 margin-bottom: 15px;
                                 flex-direction: column;
@@ -290,27 +291,43 @@ html {
                             .command-actions {
                                 padding: 0 15px 15px 15px;
 
-                                .run, .save, .export, .edit, .cancel {
+                                .run, .save, .export, .edit, .cancel, .kill {
                                     align-items: center;
                                     padding: 8px 12px;
                                     font-weight: 600;
                                     cursor: pointer;
                                     margin-right: 15px;
                                     font-size: 12px;
+                                    position: relative;
                                     @include foregroundHover(#222);
                                     @include foregroundClick(#222);
                                     @include backgroundHover(#ccc);
                                     @include backgroundClick(#ccc);
 
+                                    &.hidden {
+                                        display: none;
+                                    }
+
                                     &:last-child {
                                         margin-right: 0;
                                     }
 
-                                    &.run {
+                                    &.run, &.kill {
                                         @include foregroundHover(#fff);
                                         @include foregroundClick(#fff);
                                         @include backgroundHover($highlight-colour);
                                         @include backgroundClick($highlight-colour);
+                                    }
+
+                                    &.kill:hover {
+                                        @include foregroundHover(#fff);
+                                        @include foregroundClick(#fff);
+                                        @include backgroundHover($red-colour);
+                                        @include backgroundClick($red-colour);
+
+                                        .loader-outer {
+                                            display: none;
+                                        }
                                     }
 
                                     &.save, &.edit, &.export {
