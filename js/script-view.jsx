@@ -106,24 +106,28 @@ export default class Container extends Component {
                         {itemParameters}
                     </div>
                     <div className='command-actions'>
-                        <div className={'run' + (this.props.running ? ' hidden' : '')} onClick={this.props.runCommand.bind(null, this.props.id)}>
+                        <div className={'run' + (this.props.running ? ' hidden' : '')} onClick={this.props.runCommand}>
                             <span className="lnr lnr-checkmark-circle"></span>
                             Run
                         </div>
-                        <div className={'kill' + (this.props.running ? '' : ' hidden')} onClick={this.props.killCommand.bind(null, this.props.id)}>
+                        <div className={'kill' + (this.props.running ? '' : ' hidden')} onClick={this.props.killCommand}>
                             <div className={'loader-outer' + (this.props.running ? ' active' : '')}>
                                 <div className='loader' />
                             </div>
                             <span className="lnr lnr-cross-circle"></span>
                             Kill
                         </div>
-                        <div className='edit' onClick={this.props.toggleEditModeForScript.bind(null, this.props.id)}>
+                        <div className='edit' onClick={this.props.toggleEditModeForScript}>
                             <span className="lnr lnr-pencil"></span>
                             Edit Script
                         </div>
-                        <div className='export' onClick={this.props.exportScriptToFile.bind(null, this.props.id)}>
+                        <div className='export' onClick={this.props.exportScriptToFile}>
                             <span className="lnr lnr-download"></span>
                             Export Script
+                        </div>
+                        <div className='delete' onClick={this.props.deleteScript}>
+                            <span className="lnr lnr-cross-circle"></span>
+                            Delete Script
                         </div>
                     </div>
                     {outputFilesInner}
@@ -131,7 +135,7 @@ export default class Container extends Component {
                         {this.props.output}
                     </div>
                     <div className='stdin-outer'>
-                        <input type="text" placeholder="Type here to send input to the program" value={this.props.stdinInputValue || ''} onChange={this.props.handleStdinInputChange.bind(null, this.props.id)} onKeyPress={this.props.handleStdinKeyPress.bind(null, this.props.id)} />
+                        <input type="text" placeholder="Type here to send input to the program" value={this.props.stdinInputValue || ''} onChange={this.props.handleStdinInputChange} onKeyPress={this.props.handleStdinKeyPress} />
                     </div>
                 </div>
             </div>

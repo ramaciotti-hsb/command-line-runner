@@ -291,7 +291,7 @@ html {
                             .command-actions {
                                 padding: 0 15px 15px 15px;
 
-                                .run, .save, .export, .edit, .cancel, .kill {
+                                .run, .save, .export, .edit, .cancel, .kill, .delete {
                                     align-items: center;
                                     padding: 8px 12px;
                                     font-weight: 600;
@@ -312,14 +312,14 @@ html {
                                         margin-right: 0;
                                     }
 
-                                    &.run, &.kill {
+                                    &.run, &.kill, &.delete {
                                         @include foregroundHover(#fff);
                                         @include foregroundClick(#fff);
                                         @include backgroundHover($highlight-colour);
                                         @include backgroundClick($highlight-colour);
                                     }
 
-                                    &.kill:hover {
+                                    &.kill:hover, &.delete {
                                         @include foregroundHover(#fff);
                                         @include foregroundClick(#fff);
                                         @include backgroundHover($red-colour);

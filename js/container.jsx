@@ -174,6 +174,19 @@ export default class Container extends Component {
         this.saveSessionState()
     }
 
+    deleteScript (scriptId) {
+        const scriptIndex = _.findIndex(this.state.scripts, (item) => {
+            return item.id === scriptId
+        })
+
+        if (scriptIndex === -1) { return }
+        this.state.scripts.splice(scriptIndex, 1)
+        this.setState({
+            scripts: this.state.scripts
+        })
+        this.saveSessionState()
+    }
+
     openScriptFiles (paths) {
         const toReturn = []
         // Let the user open a saved template of a script or collection file
@@ -574,13 +587,14 @@ export default class Container extends Component {
         if (script && !script.editing) {
             panel = <ScriptView ref={'scriptView'} {...script}
                 handleDroppableInputChange={this.handleDroppableInputChange.bind(this)}
-                handleStdinKeyPress={this.handleStdinKeyPress.bind(this)}
-                handleStdinInputChange={this.handleStdinInputChange.bind(this)}
+                handleStdinKeyPress={this.handleStdinKeyPress.bind(this, script.id)}
+                handleStdinInputChange={this.handleStdinInputChange.bind(this, script.id)}
                 openFileForParameterDialog={this.openFileForParameterDialog.bind(this)}
-                runCommand={this.runCommand.bind(this)}
-                toggleEditModeForScript={this.toggleEditModeForScript.bind(this)}
-                exportScriptToFile={this.exportScriptToFile.bind(this)}
-                killCommand={this.killCommand.bind(this)}
+                runCommand={this.runCommand.bind(this, script.id)}
+                toggleEditModeForScript={this.toggleEditModeForScript.bind(this, script.id)}
+                exportScriptToFile={this.exportScriptToFile.bind(this, script.id)}
+                killCommand={this.killCommand.bind(this, script.id)}
+                deleteScript={this.deleteScript.bind(this, script.id)}
             />
         } else if (script && script.editing) {
             panel = <ScriptEdit ref={'scriptEdit'} {...script}
