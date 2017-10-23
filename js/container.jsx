@@ -368,7 +368,6 @@ export default class Container extends Component {
         }
 
         const commandArguments = commandArray.slice(1).map(c => c.replace(/\ /g, '\\ '))
-        console.log(commandArguments)
         item.runningCommand = childProcess.spawn(commandArray[0], commandArguments, { cwd: (item.workingDirectory ? item.workingDirectory.replace('\\', '') : homePath), shell: true })
 
         // Catch spawn errors
