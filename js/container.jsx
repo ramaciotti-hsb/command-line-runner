@@ -11,6 +11,7 @@ import fs from 'fs'
 import ScriptView from './script-view.jsx'
 import ScriptEdit from './script-edit.jsx'
 import kill from 'tree-kill'
+import shellPath from 'shell-path'
 const childProcess = require('child_process')
 
 export default class Container extends Component {
@@ -326,7 +327,7 @@ export default class Container extends Component {
             return
         }
 
-        script.runningCommand = childProcess.spawn(commandArray[0], commandArray.slice(1), { cwd: script.workingDirectory })
+        script.runningCommand = childProcess.spawn(commandArray[0], commandArray.slice(1), { cwd: script.workingDirectory, env: {'PATH': shellPath.sync()} })
 
         // Catch spawn errors
         script.runningCommand.on('error', (error) => {
