@@ -1,6 +1,6 @@
 {
   "name": "command-line-runner",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "author": "Nic Barker",
   "description": "An atom based graphical interface for running command line utilities.",
   "main": "main.js",
