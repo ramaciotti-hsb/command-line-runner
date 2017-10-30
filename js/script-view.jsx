@@ -95,7 +95,7 @@ export default class ScriptView extends Component {
                 <div className='panel-inner'>
                     <div className='working-directory'>
                         <div className='title'>Working Directory</div>
-                        <div className='body'>{this.props.workingDirectory}</div>
+                        <div className='body'>{this.props.workingDirectory || 'No working directory specified'}</div>
                     </div>
                     <div className='command-string'>
                         <div className='title'>Command to run</div>
@@ -111,9 +111,6 @@ export default class ScriptView extends Component {
                             Run
                         </div>
                         <div className={'kill' + (this.props.running ? '' : ' hidden')} onClick={this.props.killCommand}>
-                            <div className={'loader-outer' + (this.props.running ? ' active' : '')}>
-                                <div className='loader' />
-                            </div>
                             <span className="lnr lnr-cross-circle"></span>
                             Kill
                         </div>
